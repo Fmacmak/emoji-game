@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🔥 Guess The Emoji Challenge</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --yellow: #FFD600;
+    --green: #00E676;
+    --red: #FF1744;
+    --dark: #0A0A0A;
+    --mid: #1A1A2E;
+    --card: #16213E;
+    --accent: #FF6B35;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--dark);
+    color: #fff;
+    font-family: 'Nunito', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* NOISE TEXTURE OVERLAY */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0.3;
+  }
+
+  /* SCREENS */
+  .screen { display: none; min-height: 100vh; }
+  .screen.active { display: flex; flex-direction: column; }
+
+  /* ===== HOME SCREEN ===== */
+  #home {
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(ellipse at 30% 20%, #1a0533 0%, var(--dark) 60%),
+                radial-gradient(ellipse at 80% 80%, #0d1f0d 0%, transparent 60%);
+    text-align: center;
+    padding: 40px 20px;
+    gap: 0;
+  }
+
+  .home-badge {
+    background: var(--yellow);
+    color: var(--dark);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 13px;
+    letter-spacing: 3px;
+    padding: 6px 18px;
+    border-radius: 2px;
+    margin-bottom: 20px;
+    display: inline-block;
+  }
+
+  .home-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(60px, 12vw, 130px);
+    line-height: 0.9;
+    letter-spacing: -2px;
+    background: linear-gradient(135deg, #fff 0%, var(--yellow) 50%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 10px;
+  }
+
+  .home-sub {
+    font-size: 20px;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 50px;
+    font-weight: 700;
+    letter-spacing: 1px;
+  }
+
+  .home-sub span { color: var(--green); }
+
+  .team-setup {
+    background: var(--card);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px;
+    padding: 36px;
+    width: min(500px, 90vw);
+    margin-bottom: 30px;
+  }
+
+  .team-setup h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 24px;
+    letter-spacing: 2px;
+    color: var(--yellow);
+    margin-bottom: 24px;
+    text-align: left;
+  }
+
+  .team-input-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 14px;
+    align-items: center;
+  }
+
+  .team-color-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .team-input-row input {
+    flex: 1;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px;
+    padding: 12px 16px;
+    color: #fff;
+    font-family: 'Nunito', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .team-input-row input:focus { border-color: var(--yellow); }
+
+  .btn {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 2px;
+    border: none;
+    border-radius: 12px;
+    padding: 16px 40px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.4); }
+  .btn:active { transform: translateY(0); }
+
+  .btn-primary {
+    background: var(--yellow);
+    color: var(--dark);
+  }
+
+  .btn-success {
+    background: var(--green);
+    color: var(--dark);
+  }
+
+  .btn-danger {
+    background: var(--red);
+    color: #fff;
+  }
+
+  .btn-ghost {
+    background: rgba(255,255,255,0.08);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+
+  .btn-sm {
+    font-size: 16px;
+    padding: 10px 22px;
+  }
+
+  /* ===== GAME SCREEN ===== */
+  #game {
+    background: linear-gradient(180deg, #0A0A1A 0%, #0A1A0A 100%);
+  }
+
+  .game-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 28px;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(10px);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  .round-label {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    letter-spacing: 3px;
+    color: rgba(255,255,255,0.4);
+  }
+
+  .round-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px;
+    color: var(--yellow);
+    line-height: 1;
+  }
+
+  .scoreboard-mini {
+    display: flex;
+    gap: 12px;
+  }
+
+  .score-chip {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 8px 16px;
+    text-align: center;
+    min-width: 80px;
+  }
+
+  .score-chip .chip-name {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 2px;
+  }
+
+  .score-chip .chip-score {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 26px;
+    color: #fff;
+  }
+
+  /* EMOJI DISPLAY */
+  .emoji-stage {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    text-align: center;
+    min-height: 60vh;
+  }
+
+  .category-tag {
+    font-family: 'Bebas Neue', sans-serif;
+    letter-spacing: 3px;
+    font-size: 14px;
+    padding: 6px 20px;
+    border-radius: 4px;
+    margin-bottom: 30px;
+    display: inline-block;
+  }
+
+  .cat-global { background: rgba(0,230,118,0.15); color: var(--green); border: 1px solid rgba(0,230,118,0.3); }
+  .cat-naija { background: rgba(255,107,53,0.15); color: var(--accent); border: 1px solid rgba(255,107,53,0.3); }
+  .cat-american { background: rgba(41,121,255,0.15); color: #6fa8ff; border: 1px solid rgba(41,121,255,0.3); }
+  .cat-british { background: rgba(220,50,50,0.15); color: #ff8080; border: 1px solid rgba(220,50,50,0.3); }
+  .cat-people { background: rgba(255,214,0,0.12); color: var(--yellow); border: 1px solid rgba(255,214,0,0.35); }
+  .cat-places { background: rgba(0,230,118,0.12); color: var(--green); border: 1px solid rgba(0,230,118,0.35); }
+  .cat-slang  { background: rgba(255,107,53,0.12); color: var(--accent); border: 1px solid rgba(255,107,53,0.35); }
+
+  .emoji-display {
+    font-size: clamp(60px, 16vw, 140px);
+    line-height: 1.1;
+    margin-bottom: 30px;
+    letter-spacing: 8px;
+    animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    filter: drop-shadow(0 0 40px rgba(255,214,0,0.2));
+  }
+
+  @keyframes popIn {
+    from { transform: scale(0.5) rotate(-5deg); opacity: 0; }
+    to { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+
+  .hint-line {
+    font-size: 15px;
+    color: rgba(255,255,255,0.3);
+    letter-spacing: 2px;
+    font-weight: 700;
+    margin-bottom: 40px;
+    min-height: 24px;
+  }
+
+  .hint-line span { color: rgba(255,255,255,0.7); border-bottom: 2px solid var(--yellow); padding-bottom: 2px; }
+
+  /* CONTROLS */
+  .controls {
+    padding: 20px 28px 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    border-top: 1px solid rgba(255,255,255,0.07);
+    background: rgba(0,0,0,0.3);
+  }
+
+  .controls-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .team-award-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .award-btn {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 16px;
+    letter-spacing: 1px;
+    border: 2px solid;
+    border-radius: 10px;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: transparent;
+  }
+
+  .award-btn:hover { transform: translateY(-2px); }
+  .award-btn.awarded { opacity: 0.4; }
+
+  .action-hint {
+    text-align: center;
+    font-size: 13px;
+    color: rgba(255,255,255,0.3);
+    font-weight: 700;
+    letter-spacing: 1px;
+  }
+
+  /* ANSWER REVEAL */
+  .answer-reveal {
+    display: none;
+    background: rgba(255,214,0,0.08);
+    border: 1px solid rgba(255,214,0,0.2);
+    border-radius: 16px;
+    padding: 20px 30px;
+    margin: 0 28px;
+    text-align: center;
+  }
+
+  .answer-reveal.show { display: block; animation: slideUp 0.3s ease; }
+
+  @keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  .answer-text {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 38px;
+    color: var(--yellow);
+    letter-spacing: 2px;
+  }
+
+  .answer-sub {
+    font-size: 13px;
+    color: rgba(255,255,255,0.5);
+    margin-top: 4px;
+  }
+
+  /* ===== RESULTS SCREEN ===== */
+  #results {
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(ellipse at center, #1a1500 0%, var(--dark) 70%);
+    padding: 40px 20px;
+    text-align: center;
+    gap: 30px;
+  }
+
+  .results-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(50px, 10vw, 100px);
+    background: linear-gradient(135deg, var(--yellow), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+  }
+
+  .podium {
+    display: flex;
+    gap: 16px;
+    align-items: flex-end;
+    justify-content: center;
+    margin: 10px 0;
+    flex-wrap: wrap;
+  }
+
+  .podium-card {
+    border-radius: 16px;
+    padding: 24px 20px 20px;
+    text-align: center;
+    min-width: 130px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .podium-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, transparent 100%);
+  }
+
+  .podium-place {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 60px;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .podium-team-name {
+    font-weight: 900;
+    font-size: 15px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .podium-score {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 42px;
+    color: #fff;
+  }
+
+  .podium-pts { font-size: 13px; color: rgba(255,255,255,0.5); }
+
+  .p1 { background: linear-gradient(135deg, #3d2f00, #1a1500); border: 1px solid rgba(255,214,0,0.4); transform: scale(1.1); }
+  .p2 { background: linear-gradient(135deg, #1a2233, #0d1422); border: 1px solid rgba(150,180,255,0.3); }
+  .p3 { background: linear-gradient(135deg, #2a1500, #1a0d00); border: 1px solid rgba(255,107,53,0.3); }
+
+  /* CONFETTI */
+  .confetti-piece {
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    top: -20px;
+    animation: confettiFall linear forwards;
+    z-index: 999;
+    border-radius: 2px;
+  }
+
+  @keyframes confettiFall {
+    to { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+  }
+
+  /* TIMER */
+  .timer-bar-wrap {
+    width: min(400px, 80vw);
+    height: 6px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 0 auto 10px;
+  }
+
+  .timer-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--green), var(--yellow));
+    border-radius: 10px;
+    transition: width 1s linear, background 1s;
+  }
+
+  .timer-count {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 2px;
+  }
+
+  /* RESPONSIVE */
+  @media(max-width: 500px) {
+    .game-header { flex-direction: column; gap: 12px; }
+    .score-chip { min-width: 65px; }
+    .score-chip .chip-score { font-size: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HOME SCREEN -->
+<div id="home" class="screen active">
+  <div class="home-badge">GROUP PARTY GAME</div>
+  <h1 class="home-title">Guess<br>The<br>Emoji</h1>
+  <p class="home-sub">50 rounds • <span>🌍 Global</span> + <span>🇳🇬 Nigerian Relatable</span></p>
+
+  <div class="team-setup">
+    <h3>⚡ SET UP TEAMS</h3>
+    <div id="team-inputs">
+      <div class="team-input-row">
+        <div class="team-color-dot" style="background:#FF1744"></div>
+        <input type="text" placeholder="Team 1 name e.g. Red Vipers" id="t1" value="Red Vipers">
+      </div>
+      <div class="team-input-row">
+        <div class="team-color-dot" style="background:#00E676"></div>
+        <input type="text" placeholder="Team 2 name e.g. Green Squad" id="t2" value="Green Squad">
+      </div>
+      <div class="team-input-row">
+        <div class="team-color-dot" style="background:#2979FF"></div>
+        <input type="text" placeholder="Team 3 name (optional)" id="t3">
+      </div>
+      <div class="team-input-row">
+        <div class="team-color-dot" style="background:#FF6B35"></div>
+        <input type="text" placeholder="Team 4 name (optional)" id="t4">
+      </div>
+    </div>
+  </div>
+
+  <button class="btn btn-primary" onclick="startGame()">🔥 START GAME</button>
+</div>
+
+<!-- GAME SCREEN -->
+<div id="game" class="screen">
+  <div class="game-header">
+    <div>
+      <div class="round-label">ROUND</div>
+      <div class="round-num" id="round-display">1 / 50</div>
+    </div>
+    <div class="scoreboard-mini" id="scoreboard-mini"></div>
+    <button class="btn btn-ghost btn-sm" onclick="endGame()">END GAME</button>
+  </div>
+
+  <div class="emoji-stage">
+    <div class="category-tag" id="cat-tag">GLOBAL</div>
+    <div class="emoji-display" id="emoji-display">🤔</div>
+    <div class="timer-bar-wrap">
+      <div class="timer-bar" id="timer-bar" style="width:100%"></div>
+    </div>
+    <div class="timer-count" id="timer-count">30</div>
+    <div class="hint-line" id="hint-line">_ _ _ _ _</div>
+  </div>
+
+  <div class="answer-reveal" id="answer-reveal">
+    <div class="answer-text" id="answer-text">ANSWER</div>
+    <div class="answer-sub" id="answer-sub"></div>
+  </div>
+
+  <div class="controls">
+    <div class="action-hint" id="action-hint">⬇ Award point to the team that got it right</div>
+    <div class="team-award-row" id="team-award-row"></div>
+    <div class="controls-row">
+      <button class="btn btn-ghost btn-sm" onclick="showHint()">💡 HINT</button>
+      <button class="btn btn-ghost btn-sm" onclick="revealAnswer()">👁 REVEAL</button>
+      <button class="btn btn-primary btn-sm" onclick="nextQuestion()">NEXT ➜</button>
+    </div>
+  </div>
+</div>
+
+<!-- RESULTS SCREEN -->
+<div id="results" class="screen">
+  <div class="results-title">🏆<br>FINAL<br>SCORES</div>
+  <div class="podium" id="podium"></div>
+  <button class="btn btn-primary" onclick="restartGame()">🔄 PLAY AGAIN</button>
+</div>
+
+<script>
+// ===== ALL 50 EMOJI QUESTIONS =====
+const questions = [
+
+  // 🌍 GLOBAL / INTERNATIONAL (1–25)
+  { e: "🦁👑", a: "The Lion King", cat: "global", hint: "Simba's story" },
+  { e: "🚢🧊💥", a: "Titanic", cat: "global", hint: "Jack... I'll never let go" },
+  { e: "🕷️🧑", a: "Spider-Man", cat: "global", hint: "Your friendly neighbourhood..." },
+  { e: "🧙‍♂️💍🔥", a: "The Lord of the Rings", cat: "global", hint: "One ring to rule them all" },
+  { e: "🦇🧑", a: "Batman", cat: "global", hint: "Dark knight of Gotham" },
+  { e: "🚗⚡", a: "Fast & Furious", cat: "global", hint: "Family. Cars. Speed." },
+  { e: "👻🔫", a: "Ghostbusters", cat: "global", hint: "Who you gonna call?" },
+  { e: "🧊❄️👸", a: "Frozen", cat: "global", hint: "Let it go..." },
+  { e: "🦖🏝️", a: "Jurassic Park", cat: "global", hint: "Life finds a way" },
+  { e: "👨‍🚀🌕", a: "Moon Landing", cat: "global", hint: "One giant leap for mankind" },
+  { e: "🐼🥋", a: "Kung Fu Panda", cat: "global", hint: "Po the Dragon Warrior" },
+  { e: "🚂🍫🏭", a: "Charlie and the Chocolate Factory", cat: "global", hint: "Willy Wonka's world" },
+  { e: "🏴‍☠️🏴‍☠️🍹", a: "Pirates of the Caribbean", cat: "global", hint: "Captain Jack Sparrow" },
+  { e: "👠✨12️⃣", a: "Cinderella", cat: "global", hint: "Glass slipper, midnight deadline" },
+  { e: "🧜‍♀️🌊", a: "The Little Mermaid", cat: "global", hint: "Under the sea" },
+  { e: "🐺🌕", a: "Werewolf", cat: "global", hint: "Full moon problems" },
+  { e: "🏃‍♂️💨🍫", a: "Forrest Gump", cat: "global", hint: "Life is like a box of chocolates" },
+  { e: "🧠🔪🩸", a: "Psycho", cat: "global", hint: "Classic Hitchcock thriller" },
+  { e: "💄👠👗", a: "Barbie", cat: "global", hint: "Hi Barbie! Hi Ken!" },
+  { e: "👑🐉⚔️", a: "Game of Thrones", cat: "global", hint: "You win or you die" },
+  { e: "🏀🐐23️⃣", a: "Michael Jordan", cat: "global", hint: "GOAT of basketball" },
+  { e: "🎤🕺🏽🌙", a: "Michael Jackson", cat: "global", hint: "King of Pop" },
+  { e: "🧑‍🎤🎸🔥", a: "Rockstar", cat: "global", hint: "Guitar solos and stage flames" },
+  { e: "🧑‍🚀🪐🌌", a: "Interstellar", cat: "global", hint: "Nolan's space epic" },
+  { e: "💍🚢🌊", a: "Titanic (Jack & Rose)", cat: "global", hint: "The love story on the ship" },
+
+  // 🇳🇬 NIGERIAN RELATABLE (26–50)
+  { e: "🍚🍗🎄", a: "Christmas Rice", cat: "naija", hint: "December must-have" },
+  { e: "🌶️🍲🔥", a: "Pepper Soup", cat: "naija", hint: "Naija cure for everything" },
+  { e: "🧍‍♂️🚗💨💦", a: "Danfo Splashing Water", cat: "naija", hint: "Lagos bus wahala" },
+  { e: "💃🏽🥁🎉", a: "Nigerian Wedding Party", cat: "naija", hint: "Owambe season" },
+  { e: "🏦📲💸", a: "Mobile Banking / Bank Transfer", cat: "naija", hint: "Send me alert" },
+  { e: "🚌💰🗣️", a: "\"Owa!\" Bus Conductor", cat: "naija", hint: "Collecting money on danfo" },
+  { e: "🪙📈📉", a: "Naira Rate / Forex Wahala", cat: "naija", hint: "Dollar don kill us" },
+  { e: "👩🏽‍🦱🪮💇🏽‍♀️", a: "Salon Day / Hair Braiding", cat: "naija", hint: "All day in the chair" },
+  { e: "🎤🦅🎶", a: "Davido", cat: "naija", hint: "30BG, We Rise" },
+  { e: "🧑🏽‍🎓🪩💃🏽", a: "Nigerian Convocation Party", cat: "naija", hint: "After NYSC, time to party" },
+  { e: "🛣️🚧😤", a: "Bad Nigerian Roads", cat: "naija", hint: "Potholes everywhere" },
+  { e: "🥤🍞🫘", a: "Bread & Beans (Agege + Ewa Agoyin)", cat: "naija", hint: "Lagos street breakfast" },
+  { e: "🏟️🦅⚽", a: "Super Eagles", cat: "naija", hint: "Nigeria's national team" },
+  { e: "🎶🕺🏽🕺🏽🕺🏽", a: "Afrobeats", cat: "naija", hint: "Nigeria's global export" },
+  { e: "📦🚢🇳🇬", a: "Import Business in Nigeria", cat: "naija", hint: "Tokunbo goods" },
+  { e: "🧍🏽‍♀️📱😒", a: "\"Seen\" / Blue Tick Wahala", cat: "naija", hint: "Left on read" },
+  { e: "🍛🌙🕌", a: "Ramadan Fast", cat: "naija", hint: "No food till sunset" },
+  { e: "🧑🏽‍💻📊💻", a: "Data Analyst", cat: "naija", hint: "Numbers don't lie" },
+  { e: "🛍️👜✨", a: "Owambe Shopping / Party Prep", cat: "naija", hint: "Aso-ebi and accessories" },
+  { e: "🧾💰🙆🏽‍♂️", a: "POS Agent", cat: "naija", hint: "Every corner in Nigeria" },
+  { e: "🐐🎤🇳🇬", a: "Wizkid", cat: "naija", hint: "Starboy, the GOAT" },
+  { e: "🏠💡❌", a: "NEPA Took Light", cat: "naija", hint: "E don go again!" },
+  { e: "🥁👑🎶", a: "Fuji Music", cat: "naija", hint: "Wasiu Ayinde vibes" },
+  { e: "📸📱🌍", a: "Influencer", cat: "naija", hint: "Content creator life" },
+  { e: "🏃🏽‍♂️🍲🔥", a: "Running from Pepper Soup", cat: "naija", hint: "Too hot to handle" },
+];
+
+// ===== GAME STATE =====
+let teams = [];
+let scores = [];
+let teamColors = ['#FF1744','#00E676','#2979FF','#FF6B35'];
+let currentQ = 0;
+let timerInterval = null;
+let timeLeft = 30;
+let hintShown = false;
+let answerShown = false;
+
+function startGame() {
+  teams = [];
+  scores = [];
+  ['t1','t2','t3','t4'].forEach((id, i) => {
+    const val = document.getElementById(id).value.trim();
+    if (val) { teams.push(val); scores.push(0); }
+  });
+  if (teams.length < 2) { alert('Add at least 2 team names!'); return; }
+
+  currentQ = 0;
+  showScreen('game');
+  renderScoreboard();
+  loadQuestion();
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function renderScoreboard() {
+  const mini = document.getElementById('scoreboard-mini');
+  mini.innerHTML = teams.map((t, i) => `
+    <div class="score-chip" style="border-color:${teamColors[i]}44">
+      <div class="chip-name" style="color:${teamColors[i]}">${t.substring(0,8)}</div>
+      <div class="chip-score" id="score-${i}">${scores[i]}</div>
+    </div>
+  `).join('');
+
+  const awardRow = document.getElementById('team-award-row');
+  awardRow.innerHTML = teams.map((t, i) => `
+    <button class="award-btn" id="award-${i}"
+      style="color:${teamColors[i]};border-color:${teamColors[i]}"
+      onclick="awardPoint(${i})">
+      +1 ${t}
+    </button>
+  `).join('');
+}
+
+function loadQuestion() {
+  if (currentQ >= questions.length) { endGame(); return; }
+
+  const q = questions[currentQ];
+  hintShown = false;
+  answerShown = false;
+
+  document.getElementById('round-display').textContent = `${currentQ + 1} / ${questions.length}`;
+  document.getElementById('emoji-display').textContent = q.e;
+
+  const catTag = document.getElementById('cat-tag');
+  const catMap = { global:{label:'🌍 GLOBAL',cls:'cat-global'}, naija:{label:'🇳🇬 NAIJA',cls:'cat-naija'}, people:{label:'👤 PEOPLE',cls:'cat-people'}, places:{label:'📍 PLACES',cls:'cat-places'}, slang:{label:'🗣️ SLANG',cls:'cat-slang'} };
+  const c = catMap[q.cat] || {label:'🌍 GLOBAL',cls:'cat-global'};
+  catTag.textContent = c.label;
+  catTag.className = 'category-tag ' + c.cls;
+
+  document.getElementById('hint-line').innerHTML = '— — — — —';
+  document.getElementById('answer-reveal').classList.remove('show');
+  document.getElementById('action-hint').textContent = '⬇ Award point to the team that got it right';
+
+  document.querySelectorAll('.award-btn').forEach(b => b.classList.remove('awarded'));
+
+  startTimer();
+}
+
+function startTimer() {
+  clearInterval(timerInterval);
+  timeLeft = 30;
+  updateTimer();
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    updateTimer();
+    if (timeLeft <= 0) { clearInterval(timerInterval); revealAnswer(); }
+  }, 1000);
+}
+
+function updateTimer() {
+  const pct = (timeLeft / 30) * 100;
+  const bar = document.getElementById('timer-bar');
+  bar.style.width = pct + '%';
+  bar.style.background = timeLeft > 15
+    ? 'linear-gradient(90deg,#00E676,#FFD600)'
+    : timeLeft > 7
+    ? 'linear-gradient(90deg,#FFD600,#FF6B35)'
+    : 'linear-gradient(90deg,#FF1744,#FF6B35)';
+  document.getElementById('timer-count').textContent = timeLeft + 's';
+}
+
+function showHint() {
+  if (hintShown) return;
+  hintShown = true;
+  const q = questions[currentQ];
+  document.getElementById('hint-line').innerHTML = `💡 <span>${q.hint}</span>`;
+}
+
+function revealAnswer() {
+  clearInterval(timerInterval);
+  answerShown = true;
+  const q = questions[currentQ];
+  const reveal = document.getElementById('answer-reveal');
+  document.getElementById('answer-text').textContent = q.a;
+  const catLabels = { global:'🌍 Global / International', naija:'🇳🇬 Nigerian Relatable', people:'👤 Nigerian People', places:'📍 Nigerian Places', slang:'🗣️ Naija Slang' };
+  document.getElementById('answer-sub').textContent = catLabels[q.cat] || '🌍 Global';
+  reveal.classList.add('show');
+  document.getElementById('action-hint').textContent = '✅ Give the point before moving next!';
+}
+
+function awardPoint(teamIdx) {
+  scores[teamIdx]++;
+  document.getElementById(`score-${teamIdx}`).textContent = scores[teamIdx];
+  document.querySelectorAll('.award-btn').forEach(b => b.classList.add('awarded'));
+
+  // Pulse animation
+  const chip = document.querySelectorAll('.score-chip')[teamIdx];
+  chip.style.transform = 'scale(1.2)';
+  setTimeout(() => chip.style.transform = '', 300);
+}
+
+function nextQuestion() {
+  clearInterval(timerInterval);
+  currentQ++;
+  if (currentQ >= questions.length) { endGame(); return; }
+  loadQuestion();
+}
+
+function endGame() {
+  clearInterval(timerInterval);
+  showScreen('results');
+  renderPodium();
+  launchConfetti();
+}
+
+function renderPodium() {
+  const ranked = teams.map((t, i) => ({ name: t, score: scores[i], color: teamColors[i] }))
+    .sort((a, b) => b.score - a.score);
+
+  const medals = ['🥇','🥈','🥉','4️⃣'];
+  const pClass = ['p1','p2','p3',''];
+  const podiumEl = document.getElementById('podium');
+
+  // Reorder for visual podium: 2nd, 1st, 3rd
+  const display = ranked.length >= 2 ? [ranked[1], ranked[0], ranked[2]].filter(Boolean) : ranked;
+
+  // But we still show them sorted
+  podiumEl.innerHTML = ranked.map((t, i) => `
+    <div class="podium-card ${pClass[i] || 'p3'}">
+      <div class="podium-place">${medals[i]}</div>
+      <div class="podium-team-name" style="color:${t.color}">${t.name}</div>
+      <div class="podium-score">${t.score}</div>
+      <div class="podium-pts">POINTS</div>
+    </div>
+  `).join('');
+}
+
+function launchConfetti() {
+  const colors = ['#FFD600','#FF1744','#00E676','#FF6B35','#fff','#2979FF'];
+  for (let i = 0; i < 80; i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = 'confetti-piece';
+      el.style.cssText = `
+        left:${Math.random()*100}vw;
+        background:${colors[Math.floor(Math.random()*colors.length)]};
+        width:${6+Math.random()*10}px;
+        height:${6+Math.random()*10}px;
+        border-radius:${Math.random()>0.5?'50%':'2px'};
+        animation-duration:${2+Math.random()*3}s;
+        animation-delay:${Math.random()*0.5}s;
+      `;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 4000);
+    }, i * 30);
+  }
+}
+
+function restartGame() { showScreen('home'); }
+</script>
+</body>
+</html>
