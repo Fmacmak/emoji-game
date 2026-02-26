@@ -1,5 +1,7 @@
 # Emoji Game
 
+A fun and interactive memory game where you match emojis against the clock! Test your emoji recognition skills and compete for high scores across multiple themes.
+
 ## Setup Instructions
 
 To run this project, follow the steps below:
